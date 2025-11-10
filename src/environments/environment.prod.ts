@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://api.quraassist.com', // TODO: Reemplazar con la URL real del backend en producción
+  apiUrl: 'https://api.quraassist.com', // TODO: Reemplazar con la URL real del backend en producción
   cloudinary: {
     cloudName: 'cura-medical-hn',
     uploadPreset: 'cura_uploads_prod'
