@@ -1,0 +1,22 @@
+// Estilos específicos para impresión
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  button {
+    display: none !important;
+  }
+}
+
+// Limitar líneas de texto
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

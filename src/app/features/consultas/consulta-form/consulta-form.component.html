@@ -1,0 +1,468 @@
+<div class="max-w-7xl mx-auto p-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Nueva Consulta Médica</h1>
+    <p class="text-gray-600 mt-2">Complete la información de la consulta y obtenga sugerencias de IA</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="consultaForm" (ngSubmit)="guardar()">
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+      <nav class="-mb-px flex space-x-8">
+        <button type="button" (click)="cambiarPestana('datos')"
+                [class.border-blue-500]="pestanaActiva === 'datos'"
+                [class.text-blue-600]="pestanaActiva === 'datos'"
+                [class.border-transparent]="pestanaActiva !== 'datos'"
+                [class.text-gray-500]="pestanaActiva !== 'datos'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300">
+          Datos Generales
+        </button>
+        <button type="button" (click)="cambiarPestana('signos')"
+                [class.border-blue-500]="pestanaActiva === 'signos'"
+                [class.text-blue-600]="pestanaActiva === 'signos'"
+                [class.border-transparent]="pestanaActiva !== 'signos'"
+                [class.text-gray-500]="pestanaActiva !== 'signos'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300">
+          Signos Vitales
+        </button>
+        <button type="button" (click)="cambiarPestana('diagnosticos')"
+                [class.border-blue-500]="pestanaActiva === 'diagnosticos'"
+                [class.text-blue-600]="pestanaActiva === 'diagnosticos'"
+                [class.border-transparent]="pestanaActiva !== 'diagnosticos'"
+                [class.text-gray-500]="pestanaActiva !== 'diagnosticos'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300">
+          Diagnósticos
+        </button>
+        <button type="button" (click)="cambiarPestana('receta')"
+                [class.border-blue-500]="pestanaActiva === 'receta'"
+                [class.text-blue-600]="pestanaActiva === 'receta'"
+                [class.border-transparent]="pestanaActiva !== 'receta'"
+                [class.text-gray-500]="pestanaActiva !== 'receta'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300">
+          Receta
+        </button>
+      </nav>
+    </div>
+
+    <!-- Tab: Datos Generales -->
+    <div *ngIf="pestanaActiva === 'datos'" class="space-y-6">
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Información de la Consulta</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Motivo de Consulta -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Motivo de Consulta <span class="text-red-500">*</span>
+            </label>
+            <input type="text" formControlName="motivoConsulta"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   placeholder="Ej: Dolor de cabeza persistente">
+            <div *ngIf="consultaForm.get('motivoConsulta')?.invalid && consultaForm.get('motivoConsulta')?.touched"
+                 class="text-red-500 text-sm mt-1">
+              El motivo de consulta es requerido
+            </div>
+          </div>
+
+          <!-- Padecimiento Actual -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Padecimiento Actual <span class="text-red-500">*</span>
+            </label>
+            <textarea formControlName="padecimientoActual" rows="4"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Describa detalladamente los síntomas..."></textarea>
+            <div *ngIf="consultaForm.get('padecimientoActual')?.invalid && consultaForm.get('padecimientoActual')?.touched"
+                 class="text-red-500 text-sm mt-1">
+              El padecimiento actual es requerido
+            </div>
+          </div>
+
+          <!-- Botón IA -->
+          <div class="md:col-span-2">
+            <button type="button" (click)="obtenerSugerenciasIA()" [disabled]="cargandoIA"
+                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg *ngIf="cargandoIA" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg *ngIf="!cargandoIA" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+              </svg>
+              {{ cargandoIA ? 'Consultando IA...' : 'Obtener Sugerencias de IA' }}
+            </button>
+          </div>
+
+          <!-- Antecedentes Familiares -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Antecedentes Familiares</label>
+            <textarea formControlName="antecedentesFamiliares" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Diabetes, hipertensión, cáncer..."></textarea>
+          </div>
+
+          <!-- Antecedentes Personales -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Antecedentes Personales</label>
+            <textarea formControlName="antecedentesPersonales" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Cirugías previas, enfermedades crónicas..."></textarea>
+          </div>
+
+          <!-- Alergias -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Alergias</label>
+            <input type="text" formControlName="alergias"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   placeholder="Medicamentos, alimentos...">
+          </div>
+
+          <!-- Exploración Física -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Exploración Física</label>
+            <textarea formControlName="exploracionFisica" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Hallazgos del examen físico..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sugerencias IA -->
+      <div *ngIf="sugerenciasIA" class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+          Sugerencias de Diagnóstico (IA)
+        </h3>
+
+        <div class="space-y-4">
+          <div *ngFor="let diag of sugerenciasIA.diagnosticosProbables"
+               class="bg-white rounded-lg p-4 border border-blue-200">
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex-1">
+                <h4 class="font-semibold text-gray-900">{{ diag.nombre }}</h4>
+                <p *ngIf="diag.codigoCIE10" class="text-sm text-gray-600">CIE-10: {{ diag.codigoCIE10 }}</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      [class.bg-green-100]="diag.probabilidad > 0.7"
+                      [class.text-green-800]="diag.probabilidad > 0.7"
+                      [class.bg-yellow-100]="diag.probabilidad <= 0.7"
+                      [class.text-yellow-800]="diag.probabilidad <= 0.7">
+                  {{ (diag.probabilidad * 100).toFixed(0) }}%
+                </span>
+                <button type="button" (click)="aplicarDiagnosticoIA(diag)"
+                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  Agregar
+                </button>
+              </div>
+            </div>
+            <p class="text-sm text-gray-700">{{ diag.justificacion }}</p>
+          </div>
+        </div>
+
+        <!-- Advertencias -->
+        <div *ngIf="sugerenciasIA.advertencias.length > 0" class="mt-4 bg-yellow-50 border border-yellow-200 rounded p-3">
+          <p class="text-sm text-yellow-800 font-medium mb-2">Advertencias:</p>
+          <ul class="list-disc list-inside text-sm text-yellow-700 space-y-1">
+            <li *ngFor="let adv of sugerenciasIA.advertencias">{{ adv }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Signos Vitales -->
+    <div *ngIf="pestanaActiva === 'signos'" formGroupName="signosVitales">
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-6">Signos Vitales</h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <!-- Presión Arterial -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">PA Sistólica (mmHg)</label>
+            <input type="number" formControlName="presionSistolica"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="120">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">PA Diastólica (mmHg)</label>
+            <input type="number" formControlName="presionDiastolica"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="80">
+          </div>
+
+          <!-- FC y FR -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">FC (lpm)</label>
+            <input type="number" formControlName="frecuenciaCardiaca"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="72">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">FR (rpm)</label>
+            <input type="number" formControlName="frecuenciaRespiratoria"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="16">
+          </div>
+
+          <!-- Temperatura y SpO2 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Temperatura (°C)</label>
+            <input type="number" step="0.1" formControlName="temperatura"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="36.5">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">SpO2 (%)</label>
+            <input type="number" formControlName="saturacionOxigeno"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="98">
+          </div>
+
+          <!-- Peso y Talla -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Peso (kg)</label>
+            <input type="number" step="0.1" formControlName="peso"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="70">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Talla (cm)</label>
+            <input type="number" formControlName="talla"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="170">
+          </div>
+
+          <!-- Glucosa -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Glucosa (mg/dL)</label>
+            <input type="number" formControlName="glucosa"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                   placeholder="90">
+          </div>
+
+          <!-- Observaciones -->
+          <div class="col-span-2 md:col-span-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
+            <textarea formControlName="observaciones" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Observaciones adicionales sobre los signos vitales..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Diagnósticos -->
+    <div *ngIf="pestanaActiva === 'diagnosticos'">
+      <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold">Diagnósticos</h2>
+          <button type="button" (click)="agregarDiagnostico()"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            + Agregar Diagnóstico
+          </button>
+        </div>
+
+        <div *ngIf="diagnosticos.length === 0" class="text-center py-8 text-gray-500">
+          No hay diagnósticos agregados. Haz clic en "Agregar Diagnóstico" o usa las sugerencias de IA.
+        </div>
+
+        <div class="space-y-4" formArrayName="diagnosticos">
+          <div *ngFor="let diag of diagnosticos.controls; let i = index"
+               [formGroupName]="i"
+               class="border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="font-medium text-gray-900">Diagnóstico {{ i + 1 }}</h3>
+              <button type="button" (click)="eliminarDiagnostico(i)"
+                      class="text-red-600 hover:text-red-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción *</label>
+                <input type="text" formControlName="descripcion"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="Ej: Gripe común">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Código CIE-10</label>
+                <input type="text" formControlName="codigoCIE10"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="J00">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
+                <select formControlName="tipo"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option *ngFor="let tipo of tiposDiagnostico" [value]="tipo">{{ tipo }}</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Severidad *</label>
+                <select formControlName="severidad"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option *ngFor="let sev of severidades" [value]="sev">{{ sev }}</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
+                <textarea formControlName="notas" rows="2"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Notas adicionales..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Receta -->
+    <div *ngIf="pestanaActiva === 'receta'" formGroupName="receta">
+      <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold">Receta Médica</h2>
+          <button type="button" (click)="agregarMedicamento()"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            + Agregar Medicamento
+          </button>
+        </div>
+
+        <div class="space-y-6" formArrayName="medicamentos">
+          <div *ngFor="let med of medicamentos.controls; let i = index"
+               [formGroupName]="i"
+               class="border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="font-medium text-gray-900">Medicamento {{ i + 1 }}</h3>
+              <button type="button" (click)="eliminarMedicamento(i)"
+                      class="text-red-600 hover:text-red-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                <input type="text" formControlName="nombre"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="Ej: Paracetamol">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Principio Activo</label>
+                <input type="text" formControlName="principioActivo"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="Acetaminofén">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Dosis *</label>
+                <input type="text" formControlName="dosis"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="500mg">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Vía *</label>
+                <select formControlName="via"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="oral">Oral</option>
+                  <option value="intravenosa">Intravenosa</option>
+                  <option value="intramuscular">Intramuscular</option>
+                  <option value="subcutanea">Subcutánea</option>
+                  <option value="topica">Tópica</option>
+                  <option value="rectal">Rectal</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Frecuencia *</label>
+                <input type="text" formControlName="frecuencia"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="Cada 8 horas">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Duración *</label>
+                <input type="text" formControlName="duracion"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                       placeholder="7 días">
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Indicaciones</label>
+                <textarea formControlName="indicaciones" rows="2"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Tomar con alimentos..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicaciones Generales -->
+        <div class="mt-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Indicaciones Generales</label>
+            <textarea formControlName="indicacionesGenerales" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Indicaciones generales para el paciente..."></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Recomendaciones</label>
+            <textarea formControlName="recomendaciones" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Recomendaciones adicionales..."></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Estudios de Laboratorio</label>
+            <textarea formControlName="estudiosLaboratorio" rows="2"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Hemograma, glucosa..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="mt-6 flex justify-end space-x-4">
+      <button type="button" (click)="guardar()" [disabled]="loading"
+              class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50">
+        Guardar Borrador
+      </button>
+      <button type="submit" [disabled]="loading || consultaForm.invalid"
+              class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+        <svg *ngIf="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        {{ loading ? 'Guardando...' : 'Guardar Consulta' }}
+      </button>
+    </div>
+  </form>
+</div>

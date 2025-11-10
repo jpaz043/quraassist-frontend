@@ -1,0 +1,399 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="flex items-center justify-center space-x-3">
+          <span class="material-icons-outlined animate-spin text-primary-600">refresh</span>
+          <span class="text-gray-600">Cargando cita...</span>
+        </div>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error() && !loading()) {
+      <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="text-center">
+          <span class="material-icons-outlined text-red-500 text-6xl">error_outline</span>
+          <h2 class="mt-4 text-xl font-semibold text-gray-900">{{ error() }}</h2>
+          <button
+            (click)="volver()"
+            class="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+            <span class="material-icons-outlined text-sm mr-2">arrow_back</span>
+            Volver a la agenda
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Cita Details -->
+    @if (cita() && !loading()) {
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <button
+                (click)="volver()"
+                class="text-white hover:text-primary-100 transition-colors">
+                <span class="material-icons-outlined">arrow_back</span>
+              </button>
+              <div>
+                <h1 class="text-2xl font-bold text-white">Detalles de la Cita</h1>
+                <p class="text-primary-100 text-sm mt-1">
+                  {{ formatFecha(cita()!.fechaHora) }} • {{ formatHora(cita()!.fechaHora) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Estado Badge -->
+            <div [class]="'px-4 py-2 rounded-full text-sm font-semibold flex items-center space-x-2 ' + getEstadoColor(cita()!.estado)">
+              <span class="material-icons-outlined text-lg">{{ getEstadoIcon(cita()!.estado) }}</span>
+              <span>{{ getEstadoTexto(cita()!.estado) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+
+          <!-- Información del Paciente -->
+          <div class="mb-6">
+            <div class="flex items-center space-x-2 mb-4">
+              <span class="material-icons-outlined text-primary-600">person</span>
+              <h2 class="text-lg font-semibold text-gray-900">Información del Paciente</h2>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div class="flex items-start">
+                <span class="material-icons-outlined text-gray-400 text-xl mr-3">badge</span>
+                <div>
+                  <p class="text-sm text-gray-500">Nombre Completo</p>
+                  <p class="text-base font-medium text-gray-900">{{ cita()!.paciente.nombreCompleto }}</p>
+                </div>
+              </div>
+
+              <div class="flex items-start">
+                <span class="material-icons-outlined text-gray-400 text-xl mr-3">phone</span>
+                <div>
+                  <p class="text-sm text-gray-500">Teléfono</p>
+                  <p class="text-base font-medium text-gray-900">{{ cita()!.paciente.telefono }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detalles de la Cita -->
+          <div class="mb-6">
+            <div class="flex items-center space-x-2 mb-4">
+              <span class="material-icons-outlined text-primary-600">event</span>
+              <h2 class="text-lg font-semibold text-gray-900">Detalles de la Cita</h2>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+              @if (cita()!.motivo) {
+                <div class="flex items-start">
+                  <span class="material-icons-outlined text-gray-400 text-xl mr-3">description</span>
+                  <div class="flex-1">
+                    <p class="text-sm text-gray-500">Motivo de Consulta</p>
+                    <p class="text-base text-gray-900">{{ cita()!.motivo }}</p>
+                  </div>
+                </div>
+              }
+
+              @if (cita()!.notas) {
+                <div class="flex items-start">
+                  <span class="material-icons-outlined text-gray-400 text-xl mr-3">notes</span>
+                  <div class="flex-1">
+                    <p class="text-sm text-gray-500">Notas</p>
+                    <p class="text-base text-gray-900 whitespace-pre-wrap">{{ cita()!.notas }}</p>
+                  </div>
+                </div>
+              }
+
+              <div class="flex items-start">
+                <span class="material-icons-outlined text-gray-400 text-xl mr-3">schedule</span>
+                <div>
+                  <p class="text-sm text-gray-500">Duración</p>
+                  <p class="text-base font-medium text-gray-900">{{ cita()!.duracionMinutos }} minutos</p>
+                </div>
+              </div>
+
+              @if (cita()!.ubicacion) {
+                <div class="flex items-start">
+                  <span class="material-icons-outlined text-gray-400 text-xl mr-3">location_on</span>
+                  <div>
+                    <p class="text-sm text-gray-500">Ubicación</p>
+                    <p class="text-base font-medium text-gray-900">{{ cita()!.ubicacion!.nombre }}</p>
+                    @if (cita()!.ubicacion!.direccion) {
+                      <p class="text-sm text-gray-600">{{ cita()!.ubicacion!.direccion }}</p>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Recordatorio -->
+              <div class="flex items-start">
+                <span class="material-icons-outlined text-gray-400 text-xl mr-3">notifications</span>
+                <div>
+                  <p class="text-sm text-gray-500">Recordatorio WhatsApp</p>
+                  @if (cita()!.recordatorioEnviado) {
+                    <div class="flex items-center space-x-2 mt-1">
+                      <span class="material-icons-outlined text-green-600 text-sm">check_circle</span>
+                      <span class="text-sm text-green-600 font-medium">Enviado</span>
+                      @if (cita()!.fechaRecordatorio) {
+                        <span class="text-xs text-gray-500">
+                          • {{ formatFecha(cita()!.fechaRecordatorio!) }}
+                        </span>
+                      }
+                    </div>
+                  } @else {
+                    <div class="flex items-center space-x-2 mt-1">
+                      <span class="material-icons-outlined text-gray-400 text-sm">schedule</span>
+                      <span class="text-sm text-gray-600">No enviado</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Consulta Asociada -->
+          @if (tieneConsulta()) {
+            <div class="mb-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                  <span class="material-icons-outlined text-primary-600">description</span>
+                  <h2 class="text-lg font-semibold text-gray-900">Consulta Médica</h2>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300">
+                  <span class="material-icons-outlined text-xs mr-1">check_circle</span>
+                  Atendida
+                </span>
+              </div>
+
+              <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-5 border border-blue-200">
+                <div class="space-y-4">
+
+                  <!-- Motivo de Consulta -->
+                  @if (getConsulta()?.motivoConsulta) {
+                    <div>
+                      <p class="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-1">Motivo de Consulta</p>
+                      <p class="text-sm text-gray-900">{{ getConsulta().motivoConsulta }}</p>
+                    </div>
+                  }
+
+                  <!-- Padecimiento Actual -->
+                  @if (getConsulta()?.padecimientoActual) {
+                    <div>
+                      <p class="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-1">Padecimiento Actual</p>
+                      <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ getConsulta().padecimientoActual }}</p>
+                    </div>
+                  }
+
+                  <!-- Signos Vitales (si existen) -->
+                  @if (getConsulta()?.signosVitales) {
+                    <div>
+                      <p class="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">Signos Vitales</p>
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        @if (getConsulta().signosVitales.presionArterial) {
+                          <div class="bg-white rounded-md p-2 shadow-sm">
+                            <p class="text-xs text-gray-600">Presión</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ getConsulta().signosVitales.presionArterial }}</p>
+                          </div>
+                        }
+                        @if (getConsulta().signosVitales.frecuenciaCardiaca) {
+                          <div class="bg-white rounded-md p-2 shadow-sm">
+                            <p class="text-xs text-gray-600">FC</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ getConsulta().signosVitales.frecuenciaCardiaca }} lpm</p>
+                          </div>
+                        }
+                        @if (getConsulta().signosVitales.temperatura) {
+                          <div class="bg-white rounded-md p-2 shadow-sm">
+                            <p class="text-xs text-gray-600">Temp.</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ getConsulta().signosVitales.temperatura }}°C</p>
+                          </div>
+                        }
+                        @if (getConsulta().signosVitales.peso) {
+                          <div class="bg-white rounded-md p-2 shadow-sm">
+                            <p class="text-xs text-gray-600">Peso</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ getConsulta().signosVitales.peso }} kg</p>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Diagnósticos -->
+                  @if (getConsulta()?.diagnosticos && getConsulta().diagnosticos.length > 0) {
+                    <div>
+                      <p class="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">Diagnósticos</p>
+                      <div class="space-y-2">
+                        @for (diagnostico of getConsulta().diagnosticos; track diagnostico.id) {
+                          <div class="bg-white rounded-md p-3 shadow-sm">
+                            <div class="flex items-start space-x-2">
+                              <span class="material-icons-outlined text-blue-600 text-sm mt-0.5">local_hospital</span>
+                              <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900">{{ diagnostico.descripcion }}</p>
+                                @if (diagnostico.codigo) {
+                                  <p class="text-xs text-gray-600 mt-1">Código: {{ diagnostico.codigo }}</p>
+                                }
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Plan de Tratamiento -->
+                  @if (getConsulta()?.planTratamiento) {
+                    <div>
+                      <p class="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-1">Plan de Tratamiento</p>
+                      <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ getConsulta().planTratamiento }}</p>
+                    </div>
+                  }
+
+                  <!-- Estado de la Consulta -->
+                  <div class="flex items-center justify-between pt-3 border-t border-blue-200">
+                    <div class="flex items-center space-x-2 text-xs text-gray-600">
+                      <span class="material-icons-outlined text-sm">schedule</span>
+                      <span>Registrada: {{ formatFecha(getConsulta().createdAt) }}</span>
+                    </div>
+                    @if (getConsulta()?.estado === 'completada') {
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span class="material-icons-outlined text-xs mr-1">check</span>
+                        Completada
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Botón para ver detalle completo -->
+                  <div class="pt-3">
+                    <button
+                      (click)="verConsulta()"
+                      class="w-full flex items-center justify-center px-4 py-2 border border-blue-300 rounded-lg shadow-sm text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                      <span class="material-icons-outlined mr-2 text-base">visibility</span>
+                      Ver Detalles Completos de la Consulta
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Acciones Principales -->
+          <div class="border-t pt-6">
+            <h3 class="text-sm font-medium text-gray-700 mb-4">Acciones</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+
+              <!-- Atender Ahora (Acción Principal) -->
+              @if (puedeAtender()) {
+                <button
+                  (click)="atenderCita()"
+                  [disabled]="processingAction()"
+                  class="flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="material-icons-outlined mr-2">medical_services</span>
+                  Atender Ahora
+                </button>
+              }
+
+              <!-- Confirmar Cita -->
+              @if (puedeConfirmar()) {
+                <button
+                  (click)="confirmarCita()"
+                  [disabled]="processingAction()"
+                  class="flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="material-icons-outlined mr-2">check_circle</span>
+                  Confirmar Cita
+                </button>
+              }
+
+              <!-- Editar -->
+              @if (puedeEditar()) {
+                <button
+                  (click)="editarCita()"
+                  [disabled]="processingAction()"
+                  class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="material-icons-outlined mr-2">edit</span>
+                  Editar
+                </button>
+              }
+
+              <!-- Enviar Recordatorio -->
+              @if (puedeEnviarRecordatorio()) {
+                <button
+                  (click)="enviarRecordatorio()"
+                  [disabled]="processingAction()"
+                  class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="material-icons-outlined mr-2">send</span>
+                  Enviar Recordatorio
+                </button>
+              }
+
+              <!-- Ver Historial -->
+              <button
+                (click)="verHistorial()"
+                [disabled]="processingAction()"
+                class="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="material-icons-outlined mr-2">history</span>
+                Ver Historial
+              </button>
+
+              <!-- Cancelar -->
+              @if (puedeCancelar()) {
+                <button
+                  (click)="showCancelarModal.set(true)"
+                  [disabled]="processingAction()"
+                  class="flex items-center justify-center px-4 py-3 border border-red-300 rounded-lg shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="material-icons-outlined mr-2">cancel</span>
+                  Cancelar Cita
+                </button>
+              }
+            </div>
+          </div>
+
+        </div>
+      </div>
+    }
+
+    <!-- Modal de Cancelar (Simple) -->
+    @if (showCancelarModal()) {
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div class="flex items-center space-x-3 mb-4">
+            <span class="material-icons-outlined text-red-600 text-3xl">warning</span>
+            <h3 class="text-lg font-semibold text-gray-900">Cancelar Cita</h3>
+          </div>
+
+          <p class="text-gray-600 mb-6">
+            ¿Está seguro que desea cancelar esta cita?
+          </p>
+
+          <div class="flex space-x-3 justify-end">
+            <button
+              (click)="showCancelarModal.set(false)"
+              [disabled]="processingAction()"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50">
+              No, mantener
+            </button>
+            <button
+              (click)="cancelarCita()"
+              [disabled]="processingAction()"
+              class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
+              @if (processingAction()) {
+                <span class="material-icons-outlined animate-spin text-sm">refresh</span>
+              } @else {
+                Sí, cancelar
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>
